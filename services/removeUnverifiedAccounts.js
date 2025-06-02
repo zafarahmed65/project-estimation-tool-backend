@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import User from "../models/user.js";
+import User from "../models/Admin.js";
 
 const removeUnverifiedUsers = () => {
     cron.schedule("*/10 * * * *", async () => { // automation after every 10 minutes

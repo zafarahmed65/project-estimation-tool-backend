@@ -8,13 +8,12 @@ import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 
-import authRoutes from "./routes/auth.js";
-import userRoutes from "./routes/user.js";
 import projectDetailsRoutes from "./routes/projectDetails.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import dropdownOptionsRoutes from "./routes/dropdownOptions.js"
+import adminRoutes from "./routes/Admin.js";
 
 const app = express();
-
 // Rate limiting
 app.use(
   rateLimit({
@@ -63,12 +62,14 @@ app.use(cookieParser());
 
 // Routes
 app.get("/", (_req, res) => res.send("Welcome to the react Backend!"));
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/projects", projectDetailsRoutes);
+app.use("/api/projects", projectDetailsRoutes)
+app.use('/api/dropdown-options', dropdownOptionsRoutes);
+app.use("/api/admin", adminRoutes)
+
 
 // Error handler
 app.use(errorHandler);
+
 
 // Connect to MongoDB
 mongoose.set("strictQuery", false);
