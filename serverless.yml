@@ -1,0 +1,99 @@
+service: project-estimation-tool-backend
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${opt:region, 'eu-north-1'} # Change to your preferred region
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512 # Adjust based on your needs (128-10240 MB)
+  timeout: 29 # Max 30s for HTTP API Gateway, set to 29
+
+  # Environment Variables
+  # IMPORTANT: Replace the values below with your actual values OR set system environment variables
+  #
+  # Option 1: Set system environment variables (recommended):
+  #   Windows PowerShell: $env:MONGODB_URI="your-connection-string"
+  #   Windows CMD: set MONGODB_URI=your-connection-string
+  #   Linux/Mac: export MONGODB_URI="your-connection-string"
+  #
+  # Option 2: Replace ${env:MONGODB_URI} with your actual value directly (less secure)
+  #   MONGODB_URI: "mongodb+srv://user:pass@cluster.mongodb.net/db"
+  environment:
+    # Database - Replace with your MongoDB connection string
+    MONGODB_URI: ${env:MONGODB_URI, 'REPLACE_WITH_YOUR_MONGODB_URI'}
+    # Authentication - Replace with your JWT secret
+    JWT_SECRET: ${env:JWT_SECRET, 'REPLACE_WITH_YOUR_JWT_SECRET'}
+    # Node Environment
+    NODE_ENV: ${self:provider.stage}
+
+    # Add any other environment variables here
+    # They will be read from system environment variables
+    # Example:
+    # CLOUDINARY_CLOUD_NAME: ${env:CLOUDINARY_CLOUD_NAME, ''}
+    # CLOUDINARY_API_KEY: ${env:CLOUDINARY_API_KEY, ''}
+    # CLOUDINARY_API_SECRET: ${env:CLOUDINARY_API_SECRET, ''}
+
+    # Option: Use AWS Parameter Store (recommended for production)
+    # Uncomment and use this instead:
+    # MONGODB_URI: ${ssm:/project-estimation-tool/MONGODB_URI}
+    # JWT_SECRET: ${ssm:/project-estimation-tool/JWT_SECRET}
+
+  # HTTP API Gateway Configuration
+  httpApi:
+    cors:
+      allowedOrigins:
+        - "https://project-estimation-tool-frontend.vercel.app"
+        - "http://localhost:3000"
+        - "*" # Remove this in production and use specific domains
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - X-Amz-Date
+        - X-Api-Key
+        - X-Amz-Security-Token
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+        - OPTIONS
+      allowCredentials: false # Set to true if using cookies/auth headers
+
+# Lambda Function Definition
+functions:
+  api:
+    handler: lambda.handler # Points to lambda.js export
+    events:
+      # Catch-all route for all API paths
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+      # Root path
+      - httpApi:
+          path: /
+          method: ANY
+
+# Plugins
+plugins:
+  - serverless-offline # For local testing
+  # Note: Removed serverless-dotenv-plugin - using system environment variables directly
+  # Set environment variables before deployment:
+  # export MONGODB_URI="your-connection-string"
+  # export JWT_SECRET="your-secret-key"
+
+# Custom Configuration
+custom:
+  serverless-offline:
+    httpPort: 3000
+    noPrependStageInUrl: true
+# Optional: Add resources (S3 buckets, DynamoDB tables, etc.)
+# resources:
+#   Resources:
+#     MyBucket:
+#       Type: AWS::S3::Bucket
+#       Properties:
+#         BucketName: my-bucket-name
+
