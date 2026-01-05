@@ -37,6 +37,22 @@ export const connectDB = async () => {
   // Create new connection
   connectionPromise = (async () => {
     try {
+      // Check if MONGODB_URI is set
+      if (
+        !process.env.MONGODB_URI ||
+        process.env.MONGODB_URI === "REPLACE_WITH_YOUR_MONGODB_URI"
+      ) {
+        const errorMsg = !process.env.MONGODB_URI
+          ? "MONGODB_URI environment variable is not set"
+          : "MONGODB_URI is set to placeholder value. Please set the actual connection string.";
+        console.error("❌", errorMsg);
+        throw new Error(errorMsg);
+      }
+
+      // Log connection attempt (without exposing full URI)
+      const uriPreview = process.env.MONGODB_URI.substring(0, 20) + "...";
+      console.log("🔌 Attempting to connect to MongoDB:", uriPreview);
+
       const connection = await mongoose.connect(process.env.MONGODB_URI, {
         serverSelectionTimeoutMS: 10000, // Increased to 10s
         socketTimeoutMS: 45000, // Close sockets after 45s of inactivity

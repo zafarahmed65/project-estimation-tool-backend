@@ -22,9 +22,9 @@ provider:
   #   MONGODB_URI: "mongodb+srv://user:pass@cluster.mongodb.net/db"
   environment:
     # Database - Replace with your MongoDB connection string
-    MONGODB_URI: ${env:MONGODB_URI, 'REPLACE_WITH_YOUR_MONGODB_URI'}
+    MONGODB_URI: ${env:MONGODB_URI, 'mongodb+srv://abdullahEcommerce:ecommerce@cluster0.b8qkk.mongodb.net/project-tool'}
     # Authentication - Replace with your JWT secret
-    JWT_SECRET: ${env:JWT_SECRET, 'REPLACE_WITH_YOUR_JWT_SECRET'}
+    JWT_SECRET: ${env:JWT_SECRET, 'your_jwt_secret_keyjhfhgsfdarreiu'}
     # Node Environment
     NODE_ENV: ${self:provider.stage}
 

@@ -71,6 +71,15 @@ app.use(cookieParser());
 // Ensure database connection before handling requests (for Lambda)
 app.use(async (req, res, next) => {
   try {
+    // Check if MONGODB_URI is configured
+    if (!process.env.MONGODB_URI || process.env.MONGODB_URI === 'REPLACE_WITH_YOUR_MONGODB_URI') {
+      console.error("❌ MONGODB_URI not configured properly");
+      return res.status(503).json({
+        success: false,
+        message: "Database configuration error. MONGODB_URI is not set correctly.",
+      });
+    }
+
     // Always ensure connection is ready before handling requests
     const connection = await connectDB();
     
@@ -78,17 +87,21 @@ app.use(async (req, res, next) => {
     if (connection && mongoose.connection.readyState === 1) {
       next();
     } else {
-      // If connection failed, return error
+      // If connection failed, return error with more details
+      const state = mongoose.connection.readyState;
+      const stateNames = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+      console.error(`❌ Connection state: ${stateNames[state] || state}`);
       return res.status(503).json({
         success: false,
         message: "Database connection unavailable. Please try again.",
+        details: `Connection state: ${stateNames[state] || state}`
       });
     }
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("Database connection failed:", error.message);
     return res.status(503).json({
       success: false,
-      message: "Database connection failed. Please try again.",
+      message: error.message || "Database connection failed. Please try again.",
     });
   }
 });
