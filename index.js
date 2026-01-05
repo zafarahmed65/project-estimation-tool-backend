@@ -6,12 +6,18 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+import mongoose from "mongoose";
 
 import projectDetailsRoutes from "./routes/projectDetails.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import dropdownOptionsRoutes from "./routes/dropdownOptions.js";
 import adminRoutes from "./routes/Admin.js";
 import { connectDB } from "./utils/dbConnection.js";
+
+// Configure Mongoose for Lambda
+mongoose.set("strictQuery", false);
+// Increase buffer timeout for Lambda cold starts
+mongoose.set("bufferTimeoutMS", 30000); // 30 seconds
 
 const app = express();
 // Rate limiting
@@ -64,16 +70,27 @@ app.use(cookieParser());
 
 // Ensure database connection before handling requests (for Lambda)
 app.use(async (req, res, next) => {
-  // Only check connection in Lambda (not needed for local dev)
-  if (!process.env.IS_OFFLINE && process.env.NODE_ENV !== "development") {
-    try {
-      await connectDB();
-    } catch (error) {
-      console.error("Database connection failed:", error);
-      // Don't block the request, but log the error
+  try {
+    // Always ensure connection is ready before handling requests
+    const connection = await connectDB();
+    
+    // Wait for connection to be ready
+    if (connection && mongoose.connection.readyState === 1) {
+      next();
+    } else {
+      // If connection failed, return error
+      return res.status(503).json({
+        success: false,
+        message: "Database connection unavailable. Please try again.",
+      });
     }
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    return res.status(503).json({
+      success: false,
+      message: "Database connection failed. Please try again.",
+    });
   }
-  next();
 });
 
 // Routes
